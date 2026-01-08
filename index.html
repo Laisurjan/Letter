@@ -1,0 +1,1462 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>應用文｜稱謂＆題辭（Wordwall風・魔法配色・成績卡＋彩帶）</title>
+
+  <!-- 成績卡匯出 PNG -->
+  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+
+  <style>
+    :root{
+      --bg:#ffffff;
+      --ink:#0b1220;
+      --muted:#5b6476;
+      --line:rgba(15,23,42,.10);
+
+      --p1:#7c3aed;   /* 紫 */
+      --p2:#06b6d4;   /* 青 */
+      --p3:#f59e0b;   /* 橙 */
+      --p4:#22c55e;   /* 綠 */
+      --p5:#ec4899;   /* 粉 */
+
+      --shadow: 0 18px 52px rgba(2,6,23,.14);
+      --radius: 18px;
+
+      --btn: rgba(2,6,23,.04);
+      --btnHover: rgba(2,6,23,.07);
+
+      --good: #16a34a;
+      --bad:  #dc2626;
+
+      --overlay: rgba(2,6,23,.58);
+    }
+
+    *{box-sizing:border-box}
+    html,body{
+      margin:0;padding:0;color:var(--ink);
+      font-family:system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif;
+      background: var(--bg);
+      overflow-x:hidden;
+    }
+
+    /* ✨ 更華麗 aurora + 漂浮星點 */
+    body::before{
+      content:"";
+      position:fixed; inset:-32vh -28vw;
+      background:
+        radial-gradient(1200px 680px at 10% 0%, rgba(124,58,237,.34), transparent 58%),
+        radial-gradient(1000px 600px at 92% 8%, rgba(6,182,212,.28), transparent 58%),
+        radial-gradient(920px 560px at 74% 118%, rgba(245,158,11,.20), transparent 55%),
+        radial-gradient(920px 560px at -8% 104%, rgba(34,197,94,.18), transparent 55%),
+        radial-gradient(1200px 760px at 46% 56%, rgba(236,72,153,.20), transparent 60%),
+        radial-gradient(1400px 820px at 50% 50%, rgba(255,255,255,.55), transparent 62%);
+      filter: blur(18px);
+      opacity:.97;
+      z-index:-2;
+      animation: aurora 11s ease-in-out infinite alternate;
+    }
+    @keyframes aurora{
+      0%{ transform: translate3d(-1.6%, -1.1%, 0) scale(1.00); }
+      50%{ transform: translate3d(1.3%, .9%, 0) scale(1.03); }
+      100%{ transform: translate3d(.3%, 1.6%, 0) scale(1.02); }
+    }
+    body::after{
+      content:"";
+      position:fixed; inset:0;
+      background-image:
+        radial-gradient(circle at 12% 18%, rgba(255,255,255,.9) 0 1px, transparent 2px),
+        radial-gradient(circle at 78% 22%, rgba(255,255,255,.75) 0 1px, transparent 2px),
+        radial-gradient(circle at 40% 72%, rgba(255,255,255,.70) 0 1px, transparent 2px),
+        radial-gradient(circle at 88% 78%, rgba(255,255,255,.70) 0 1px, transparent 2px),
+        radial-gradient(circle at 20% 88%, rgba(255,255,255,.62) 0 1px, transparent 2px),
+        radial-gradient(circle at 55% 15%, rgba(255,255,255,.55) 0 1px, transparent 2px),
+        radial-gradient(circle at 62% 58%, rgba(255,255,255,.55) 0 1px, transparent 2px);
+      opacity:.38;
+      pointer-events:none;
+      z-index:-1;
+      animation: twinkle 6s ease-in-out infinite alternate;
+    }
+    @keyframes twinkle{
+      0%{ opacity:.30; }
+      100%{ opacity:.44; }
+    }
+
+    button{font:inherit}
+    .wrap{max-width:980px;margin:0 auto;padding:18px 14px 28px}
+
+    header{
+      display:flex;gap:12px;align-items:flex-start;justify-content:space-between;
+      padding:10px 2px 14px;border-bottom:1px solid var(--line);
+    }
+    .title{display:flex;flex-direction:column;gap:6px}
+    .title h1{
+      margin:0;font-size:18px;letter-spacing:.2px;
+      display:flex;align-items:center;gap:10px;
+    }
+    .badge{
+      font-size:12px;padding:4px 10px;border-radius:999px;
+      border:1px solid rgba(124,58,237,.24);
+      background:
+        radial-gradient(260px 70px at 20% 0%, rgba(124,58,237,.18), transparent 60%),
+        radial-gradient(260px 70px at 80% 0%, rgba(6,182,212,.16), transparent 60%),
+        rgba(255,255,255,.76);
+      color:rgba(60,40,140,.95);
+      white-space:nowrap;
+      backdrop-filter: blur(10px);
+      box-shadow: 0 12px 30px rgba(2,6,23,.10);
+    }
+    .title p{margin:0;color:var(--muted);font-size:13px;line-height:1.4}
+
+    .toolbar{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+    .pill{
+      border:1px solid var(--line); background:rgba(255,255,255,.76);
+      padding:8px 10px;border-radius:999px;
+      font-size:13px; cursor:pointer;
+      backdrop-filter: blur(10px);
+      display:flex;align-items:center;gap:8px;
+      box-shadow: 0 12px 30px rgba(2,6,23,.10);
+      transition:.15s;
+      position:relative;
+      overflow:hidden;
+    }
+    .pill::before{
+      content:"";
+      position:absolute; inset:-2px;
+      background: linear-gradient(90deg,
+        rgba(124,58,237,.0),
+        rgba(124,58,237,.22),
+        rgba(6,182,212,.20),
+        rgba(236,72,153,.18),
+        rgba(245,158,11,.16),
+        rgba(124,58,237,.0));
+      opacity:.0;
+      filter: blur(6px);
+      transition:.18s;
+    }
+    .pill:hover{ transform: translateY(-1px); }
+    .pill:hover::before{ opacity:.75; }
+    .pill.active{
+      border-color:rgba(124,58,237,.30);
+      background:
+        radial-gradient(520px 120px at 20% 0%, rgba(124,58,237,.26), transparent 60%),
+        radial-gradient(520px 120px at 80% 0%, rgba(6,182,212,.22), transparent 60%),
+        radial-gradient(520px 120px at 50% 120%, rgba(236,72,153,.16), transparent 60%),
+        rgba(255,255,255,.86);
+      color:#2a215d;
+    }
+    .pill.ghost{ background:rgba(255,255,255,.68); }
+    .pill .dot{ width:8px;height:8px;border-radius:50%; background:rgba(2,6,23,.25); }
+    .pill .dot.good{ background:rgba(22,163,74,.78); }
+    .pill .dot.warn{ background:rgba(245,158,11,.82); }
+
+    .card{
+      margin-top:14px;
+      background:rgba(255,255,255,.82);
+      border:1px solid rgba(255,255,255,.32);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      overflow:hidden;
+      backdrop-filter: blur(14px);
+      position:relative;
+    }
+    .card::before{
+      content:"";
+      position:absolute; inset:0;
+      background: linear-gradient(135deg,
+        rgba(124,58,237,.16),
+        rgba(6,182,212,.14),
+        rgba(236,72,153,.12),
+        rgba(245,158,11,.10));
+      opacity:.22;
+      pointer-events:none;
+    }
+    .card::after{
+      content:"";
+      position:absolute; inset:-2px;
+      border-radius:calc(var(--radius) + 2px);
+      background: conic-gradient(from 180deg,
+        rgba(124,58,237,.0),
+        rgba(124,58,237,.22),
+        rgba(6,182,212,.20),
+        rgba(236,72,153,.18),
+        rgba(245,158,11,.16),
+        rgba(124,58,237,.0));
+      filter: blur(10px);
+      opacity:.35;
+      pointer-events:none;
+      mix-blend-mode: screen;
+    }
+
+    .cardHead{
+      position:relative;
+      display:flex;align-items:center;justify-content:space-between;gap:10px;
+      padding:12px 14px;
+      background:
+        radial-gradient(820px 190px at 12% 0%, rgba(124,58,237,.28), transparent 60%),
+        radial-gradient(820px 190px at 88% 0%, rgba(6,182,212,.24), transparent 60%),
+        radial-gradient(820px 190px at 55% 110%, rgba(236,72,153,.18), transparent 60%),
+        linear-gradient(180deg, rgba(255,255,255,.94), rgba(255,255,255,.72));
+      border-bottom:1px solid rgba(15,23,42,.10);
+      backdrop-filter: blur(10px);
+    }
+    .cardHead .h{font-weight:950}
+    .cardHead .sub{font-size:12px;color:var(--muted)}
+    .cardBody{padding:14px; position:relative}
+
+    .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+    .btn{
+      border:1px solid rgba(15,23,42,.10);
+      background:var(--btn);
+      padding:10px 12px;border-radius:14px; cursor:pointer;
+      box-shadow: 0 12px 30px rgba(2,6,23,.10);
+      transition:.15s;
+    }
+    .btn:hover{background:var(--btnHover); transform: translateY(-1px); }
+    .btn.primary{
+      border-color:rgba(124,58,237,.24);
+      background:
+        radial-gradient(360px 90px at 20% 0%, rgba(124,58,237,.20), transparent 60%),
+        radial-gradient(360px 90px at 80% 0%, rgba(6,182,212,.16), transparent 60%),
+        rgba(255,255,255,.74);
+      color:rgba(60,40,140,.95);
+    }
+    .btn.good{
+      border-color:rgba(22,163,74,.25);
+      background:rgba(22,163,74,.10);
+      color:rgba(22,163,74,.95);
+    }
+
+    .split{display:grid; grid-template-columns:1fr 1fr; gap:12px;}
+    @media (max-width:760px){
+      .split{grid-template-columns:1fr}
+      header{align-items:flex-start}
+      .toolbar{justify-content:flex-start}
+    }
+
+    .col{
+      background:linear-gradient(180deg, rgba(2,6,23,.030), rgba(2,6,23,.014));
+      border:1px dashed rgba(2,6,23,.10);
+      border-radius:16px; padding:10px;
+      min-height:240px;
+      position:relative;
+    }
+    .col::before{
+      content:"";
+      position:absolute; inset:8px;
+      border-radius:14px;
+      background: linear-gradient(180deg, rgba(255,255,255,.55), transparent 55%);
+      opacity:.35;
+      pointer-events:none;
+    }
+    .col h3{margin:4px 6px 10px;font-size:13px;color:var(--muted);font-weight:950; position:relative}
+
+    .item{
+      width:100%; text-align:left;
+      display:flex; align-items:center; justify-content:space-between; gap:10px;
+      background:rgba(255,255,255,.94);
+      border:1px solid rgba(15,23,42,.10); border-radius:14px;
+      padding:10px 12px; margin:8px 4px; cursor:pointer;
+      box-shadow: 0 12px 30px rgba(2,6,23,.10);
+      transition:.15s;
+      position:relative;
+      z-index:1;
+    }
+    .item:hover{ transform: translateY(-1px); }
+    .item small{color:var(--muted)}
+    .item.selected{outline:2px solid rgba(124,58,237,.24); border-color:rgba(124,58,237,.24)}
+    .item.correct{
+      background:rgba(22,163,74,.08);
+      border-color:rgba(22,163,74,.28);
+    }
+    .item.wrong{
+      background:rgba(220,38,38,.06);
+      border-color:rgba(220,38,38,.22);
+    }
+
+    .meta{display:flex;gap:10px;flex-wrap:wrap;color:var(--muted);font-size:12px;margin-top:10px}
+
+    .toast{
+      position:fixed; left:50%; bottom:18px; transform:translateX(-50%);
+      background:#0b1220; color:#fff; padding:10px 12px; border-radius:999px;
+      font-size:13px; opacity:0; pointer-events:none; transition:.2s;
+      max-width:min(92vw,520px); text-align:center;
+      box-shadow: 0 14px 34px rgba(2,6,23,.30);
+      z-index:9999;
+      white-space:pre-wrap;
+    }
+    .toast.show{opacity:1}
+
+    .sentenceBox{
+      border:1px solid rgba(15,23,42,.10);
+      background:linear-gradient(180deg, rgba(2,6,23,.03), rgba(255,255,255,.92));
+      border-radius:18px;
+      padding:14px;
+      box-shadow: 0 12px 30px rgba(2,6,23,.10);
+    }
+    .sentenceText{
+      font-size:16px;
+      font-weight:950;
+      line-height:1.5;
+      margin:0;
+      word-break:break-word;
+    }
+    .blank{
+      display:inline-block;
+      padding:0 10px 2px;
+      margin:0 2px;
+      border-bottom:2px solid rgba(124,58,237,.60);
+      color:rgba(60,40,140,.95);
+      font-weight:950;
+    }
+
+    .choices{display:flex;flex-direction:column;gap:10px;margin-top:12px}
+    .choice{
+      border:1px solid rgba(15,23,42,.10); background:rgba(255,255,255,.94);
+      padding:12px 12px; border-radius:14px; cursor:pointer; text-align:left;
+      box-shadow: 0 12px 30px rgba(2,6,23,.10);
+      transition:.15s;
+    }
+    .choice:hover{ transform: translateY(-1px); }
+    .choice.correct{border-color:rgba(22,163,74,.35); background:rgba(22,163,74,.08)}
+    .choice.wrong{border-color:rgba(220,38,38,.28); background:rgba(220,38,38,.06)}
+
+    /* 翻翻卡 */
+    .flashWrap{display:flex;flex-direction:column;gap:10px}
+    .flashCard{
+      border:1px solid rgba(15,23,42,.10); border-radius:18px;
+      background:rgba(255,255,255,.92);
+      box-shadow:var(--shadow);
+      padding:16px;
+      min-height:240px;
+      display:flex;flex-direction:column;justify-content:space-between;gap:12px;
+      cursor:pointer;
+      user-select:none;
+      -webkit-tap-highlight-color: transparent;
+      transition:.15s;
+      position:relative;
+      overflow:hidden;
+    }
+    .flashCard::before{
+      content:"";
+      position:absolute; inset:-40px;
+      background:
+        radial-gradient(520px 180px at 10% 0%, rgba(124,58,237,.20), transparent 60%),
+        radial-gradient(520px 180px at 95% 10%, rgba(6,182,212,.16), transparent 60%),
+        radial-gradient(520px 180px at 50% 120%, rgba(236,72,153,.12), transparent 60%);
+      filter: blur(10px);
+      opacity:.55;
+      pointer-events:none;
+    }
+    .flashCard:hover{ transform: translateY(-1px); }
+    .flashTop{display:flex;align-items:center;justify-content:space-between;gap:8px; position:relative}
+    .flashTag{font-size:12px;color:var(--muted)}
+    .flashHint{font-size:12px;color:var(--muted)}
+    .flashQ{font-size:18px;font-weight:950;line-height:1.25; position:relative}
+    .flashA{
+      font-size:18px;font-weight:950;line-height:1.25;
+      color:rgba(22,163,74,.95);
+      background:rgba(22,163,74,.06);
+      border:1px solid rgba(22,163,74,.18);
+      border-radius:14px;
+      padding:12px 12px;
+      display:none;
+      position:relative;
+    }
+    .flashCard.showA .flashA{display:block;}
+    .flashCard.showA .flashHint{color:rgba(22,163,74,.95);}
+
+    /* 成績卡 Overlay */
+    .overlay{
+      position:fixed; inset:0;
+      background:var(--overlay);
+      display:none;
+      align-items:center;
+      justify-content:center;
+      padding:18px;
+      z-index:10000;
+    }
+    .overlay.show{display:flex;}
+    .scoreCard{
+      width:min(900px, 96vw);
+      border-radius:22px;
+      background:
+        radial-gradient(940px 280px at 14% 0%, rgba(124,58,237,.30), transparent 60%),
+        radial-gradient(940px 280px at 92% 0%, rgba(6,182,212,.26), transparent 60%),
+        radial-gradient(940px 280px at 55% 112%, rgba(236,72,153,.18), transparent 60%),
+        rgba(255,255,255,.94);
+      border:1px solid rgba(255,255,255,.38);
+      box-shadow: 0 28px 68px rgba(2,6,23,.40);
+      overflow:hidden;
+      backdrop-filter: blur(16px);
+      position:relative;
+    }
+    .scoreCard::after{
+      content:"";
+      position:absolute; inset:-2px;
+      background: conic-gradient(from 180deg,
+        rgba(124,58,237,.0),
+        rgba(124,58,237,.28),
+        rgba(6,182,212,.24),
+        rgba(236,72,153,.20),
+        rgba(245,158,11,.18),
+        rgba(124,58,237,.0));
+      filter: blur(12px);
+      opacity:.42;
+      pointer-events:none;
+    }
+    .scoreTop{
+      padding:16px 16px 12px;
+      display:flex;align-items:flex-start;justify-content:space-between;gap:10px;
+      border-bottom:1px solid rgba(2,6,23,.10);
+      position:relative;
+      z-index:1;
+    }
+    .scoreTop h2{
+      margin:0;font-size:18px;font-weight:950;
+      letter-spacing:.2px;
+    }
+    .scoreTop .time{
+      font-size:12px;color:var(--muted);
+      margin-top:6px;
+    }
+    .scoreBody{padding:14px 16px 16px; position:relative; z-index:1}
+    .scoreGrid{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:10px;
+    }
+    @media (max-width:760px){ .scoreGrid{grid-template-columns:1fr} }
+    .tile{
+      border:1px solid rgba(2,6,23,.10);
+      background:rgba(255,255,255,.88);
+      border-radius:16px;
+      padding:12px;
+      box-shadow: 0 12px 30px rgba(2,6,23,.10);
+    }
+    .tile .k{font-size:12px;color:var(--muted);font-weight:900}
+    .tile .v{font-size:18px;font-weight:950;margin-top:6px}
+
+    .studentRow{
+      display:grid;
+      grid-template-columns: 1.2fr .8fr 1fr;
+      gap:10px;
+      margin:12px 0 6px;
+      position:relative;
+      z-index:1;
+    }
+    @media (max-width:760px){ .studentRow{grid-template-columns:1fr} }
+    .field{
+      border:1px solid rgba(2,6,23,.10);
+      background:rgba(255,255,255,.88);
+      border-radius:16px;
+      padding:10px 12px;
+      box-shadow: 0 12px 30px rgba(2,6,23,.10);
+    }
+    .field label{
+      display:block;
+      font-size:12px;
+      color:var(--muted);
+      font-weight:900;
+      margin-bottom:6px;
+    }
+    .field input{
+      width:100%;
+      border:1px solid rgba(2,6,23,.10);
+      background:rgba(255,255,255,.92);
+      border-radius:12px;
+      padding:10px 10px;
+      font-size:14px;
+      outline:none;
+    }
+    .field input:focus{
+      border-color: rgba(124,58,237,.30);
+      box-shadow: 0 0 0 4px rgba(124,58,237,.12);
+    }
+
+    .wrongList{
+      margin-top:10px;
+      border:1px solid rgba(2,6,23,.10);
+      border-radius:16px;
+      background:rgba(255,255,255,.88);
+      overflow:hidden;
+      box-shadow: 0 12px 30px rgba(2,6,23,.10);
+      position:relative;
+      z-index:1;
+    }
+    .wrongList h3{
+      margin:0;padding:10px 12px;
+      font-size:12px;color:var(--muted);font-weight:950;
+      border-bottom:1px solid rgba(2,6,23,.08);
+    }
+    .wrongList .items{
+      max-height:220px; overflow:auto;
+      padding:8px 12px 12px;
+      font-size:13px; line-height:1.4;
+      color:#1f2937;
+    }
+    .wrongItem{
+      padding:8px 10px; border-radius:12px;
+      background:rgba(2,6,23,.03);
+      margin:8px 0;
+      border:1px solid rgba(2,6,23,.06);
+    }
+
+    .scoreBtns{
+      display:flex; gap:10px; flex-wrap:wrap;
+      padding:12px 16px 16px;
+      border-top:1px solid rgba(2,6,23,.10);
+      background:rgba(255,255,255,.80);
+      position:relative;
+      z-index:1;
+    }
+
+    /* 🎉 Confetti layer */
+    .confettiLayer{
+      position:fixed;
+      inset:0;
+      pointer-events:none;
+      z-index:20000;
+      overflow:hidden;
+      display:none;
+    }
+    .confettiLayer.show{display:block;}
+    .confetti{
+      position:absolute;
+      top:-12px;
+      width:10px;height:14px;
+      border-radius:3px;
+      opacity:.95;
+      transform: translate3d(0,0,0) rotate(0deg);
+      animation: fall linear forwards;
+      will-change: transform, opacity;
+      box-shadow: 0 12px 26px rgba(2,6,23,.15);
+    }
+    @keyframes fall{
+      0%{
+        transform: translate3d(var(--x,0px), -20px, 0) rotate(0deg);
+        opacity: 1;
+      }
+      100%{
+        transform: translate3d(calc(var(--x,0px) + var(--drift,0px)), calc(100vh + 40px), 0) rotate(var(--rot,540deg));
+        opacity: .95;
+      }
+    }
+  </style>
+</head>
+
+<body>
+<div class="wrap">
+  <header>
+    <div class="title">
+      <h1>應用文｜稱謂＆題辭 <span class="badge">練習可證明</span></h1>
+      <p>每回合少量題目（預設 6 組），手機好操作。計分模式完成後可產生成績卡（含姓名欄、錯題回放、用時下限＋達標彩帶）。</p>
+    </div>
+    <div class="toolbar" id="modeBar">
+      <button class="pill active" data-mode="match-letter">配對｜書信</button>
+      <button class="pill" data-mode="sentence">句子填空（B）</button>
+      <button class="pill" data-mode="match-couplet">配對｜題辭</button>
+      <button class="pill" data-mode="flash">翻翻卡</button>
+      <button class="pill" data-mode="quiz">情境 Quiz</button>
+      <button class="pill ghost" id="scoreBtn" title="查看/截圖成績卡">
+        <span class="dot" id="scoreDot"></span>
+        成績卡
+      </button>
+    </div>
+  </header>
+
+  <section class="card">
+    <div class="cardHead">
+      <div>
+        <div class="h" id="modeTitle">配對｜書信（對象→用語）</div>
+        <div class="sub" id="modeSub">點左一張 → 再點右一張配對。</div>
+      </div>
+      <div class="row">
+        <button class="btn" id="resetBtn">重出本回合</button>
+        <button class="btn primary" id="shuffleBtn">換一組</button>
+      </div>
+    </div>
+    <div class="cardBody" id="stage"></div>
+  </section>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- 成績卡 Overlay -->
+<div class="overlay" id="overlay">
+  <div class="scoreCard" id="scoreCard">
+    <div class="scoreTop">
+      <div>
+        <h2>成績卡｜應用文（稱謂＆題辭）</h2>
+        <div class="time" id="scoreTime">—</div>
+      </div>
+      <div style="text-align:right">
+        <div class="badge" id="scoreBadge">未達標</div>
+        <div class="time" id="scoreRule">總用時下限：60 秒</div>
+      </div>
+    </div>
+
+    <div class="scoreBody">
+      <div class="studentRow">
+        <div class="field">
+          <label>班級</label>
+          <input id="stuClass" placeholder="例如：二商一" />
+        </div>
+        <div class="field">
+          <label>座號</label>
+          <input id="stuNo" placeholder="例如：12" inputmode="numeric" />
+        </div>
+        <div class="field">
+          <label>姓名</label>
+          <input id="stuName" placeholder="例如：王小明" />
+        </div>
+      </div>
+
+      <div class="scoreGrid">
+        <div class="tile">
+          <div class="k">總正確率</div>
+          <div class="v" id="scoreAcc">—</div>
+        </div>
+        <div class="tile">
+          <div class="k">總用時（顯示值）</div>
+          <div class="v" id="scoreDur">—</div>
+        </div>
+        <div class="tile">
+          <div class="k">作答總數 / 正確</div>
+          <div class="v" id="scoreCount">—</div>
+        </div>
+        <div class="tile">
+          <div class="k">完成模式（計分）</div>
+          <div class="v" id="scoreModes">—</div>
+        </div>
+      </div>
+
+      <div class="wrongList" id="wrongBox">
+        <h3>錯題回放（本次所有計分模式）</h3>
+        <div class="items" id="wrongItems"></div>
+      </div>
+    </div>
+
+    <div class="scoreBtns">
+      <button class="btn primary" id="downloadBtn">下載成績卡 PNG</button>
+      <button class="btn" id="closeBtn">關閉</button>
+      <button class="btn good" id="clearBtn">清空本次紀錄</button>
+    </div>
+  </div>
+</div>
+
+<!-- 🎉 彩帶 -->
+<div class="confettiLayer" id="confettiLayer"></div>
+
+<script>
+/* =========================================================
+   ✅ 可調整參數
+   ========================================================= */
+const ROUND_SIZE_MATCH = 6;
+const ROUND_SIZE_SENT  = 5;
+const ROUND_SIZE_QUIZ  = 5;
+
+const PASS_ACCURACY = 70.50;
+const MIN_TOTAL_SECONDS = 60;
+
+/* =========================================================
+   小工具
+   ========================================================= */
+const $ = (s)=>document.querySelector(s);
+const $$ = (s)=>Array.from(document.querySelectorAll(s));
+
+function toast(msg){
+  const t = $("#toast");
+  t.textContent = msg;
+  t.classList.add("show");
+  clearTimeout(toast._id);
+  toast._id = setTimeout(()=>t.classList.remove("show"), 1400);
+}
+function shuffle(arr){
+  const a = arr.slice();
+  for(let i=a.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [a[i],a[j]]=[a[j],a[i]];
+  }
+  return a;
+}
+function sample(arr, n){ return shuffle(arr).slice(0, Math.min(n, arr.length)); }
+function escapeHtml(s){
+  return String(s)
+    .replaceAll("&","&amp;")
+    .replaceAll("<","&lt;")
+    .replaceAll(">","&gt;")
+    .replaceAll('"',"&quot;")
+    .replaceAll("'","&#039;");
+}
+function fmtTime(sec){
+  sec = Math.max(0, Math.floor(sec));
+  const m = Math.floor(sec/60);
+  const s = sec%60;
+  if(m<=0) return `${s}s`;
+  return `${m}m ${String(s).padStart(2,"0")}s`;
+}
+function nowStamp(){
+  const d = new Date();
+  const pad = (n)=>String(n).padStart(2,"0");
+  return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+/* =========================================================
+   ✅ DATA（含你提的「直/橫式」改成反向配對，避免提示答案）
+   ========================================================= */
+const LETTER_CATEGORIES = [
+  { cat:"家父／家嚴／家君", prompts:["對他人提到「我的爸爸」（健在）"] },
+  { cat:"家母／家慈", prompts:["對他人提到「我的媽媽」（健在）"] },
+  { cat:"家兄", prompts:["對他人提到「我的哥哥」"] },
+  { cat:"家姊", prompts:["對他人提到「我的姐姐」"] },
+  { cat:"舍弟", prompts:["對他人提到「我的弟弟」（健在）"] },
+  { cat:"舍妹", prompts:["對他人提到「我的妹妹」（健在）"] },
+  { cat:"小兒／小犬", prompts:["對他人提到「我的兒子」"] },
+  { cat:"小女", prompts:["對他人提到「我的女兒」"] },
+
+  { cat:"令尊／尊翁", prompts:["提到對方的爸爸（尊稱）"] },
+  { cat:"令堂／尊堂／萱堂", prompts:["提到對方的媽媽（尊稱）"] },
+  { cat:"令郎／令公子", prompts:["提到對方的兒子（尊稱）"] },
+  { cat:"令嬡", prompts:["提到對方的女兒（尊稱）"] },
+
+  { cat:"先父／先考／先嚴／先君", prompts:["對他人提到「爸爸已逝」"] },
+  { cat:"先母／先慈／先妣", prompts:["對他人提到「媽媽已逝」"] },
+  { cat:"亡弟", prompts:["對他人提到「弟弟已逝」"] },
+  { cat:"亡妹", prompts:["對他人提到「妹妹已逝」"] },
+
+  { cat:"賢昆仲", prompts:["稱對方兄弟（平輩兄弟）用語"] },
+  { cat:"賢伉儷", prompts:["稱對方夫妻（夫婦）用語"] },
+  { cat:"賢喬梓", prompts:["稱對方父子（父與子）用語"] },
+
+  { cat:"鈞鑒", prompts:["提稱語：寫給上級/長官（一般公務）"] },
+  { cat:"道鑒", prompts:["提稱語：寫給宗教界人士/法師/道長"] },
+  { cat:"台鑒", prompts:["提稱語：寫給平輩（一般朋友/同學）"] },
+  { cat:"惠鑒", prompts:["提稱語：寫給商界/客戶/往來對象（較客氣）"] },
+  { cat:"大鑒", prompts:["提稱語：寫給長輩（較尊敬）"] },
+
+  { cat:"鈞啟", prompts:["啟封詞：寄給校長/主管/長官（公務）"] },
+  { cat:"福啟", prompts:["啟封詞：寄給父母/家中長輩（家書）"] },
+  { cat:"台啟", prompts:["啟封詞：寄給平輩朋友/同學"] },
+  { cat:"道啟", prompts:["啟封詞：寄給宗教界人士"] },
+  { cat:"靈前", prompts:["弔唁信封：寄給喪家（寫在收件人後/或信封上）"] },
+
+  { cat:"緘／謹緘", prompts:["緘封詞：寫給平輩/晚輩寄出前封緘"] },
+
+  { cat:"敬請 鈞安", prompts:["問候語：寫給上級/長官（公務信）"] },
+  { cat:"敬請 大安", prompts:["問候語：寫給長輩（一般長輩）"] },
+  { cat:"順頌 時祺", prompts:["問候語：寫給平輩（一般社交）"] },
+  { cat:"此致 敬禮", prompts:["結尾禮貌語：一般公文/書信常用"] },
+
+  /* ✅ 反向：題幹不直接說「橫式/直式」 */
+  { cat:"直式信封", prompts:["收件人欄位由右上往下寫（是哪一種信封格式？）"] },
+  { cat:"橫式信封", prompts:["收件人欄位由左至右寫（是哪一種信封格式？）"] },
+];
+
+const COUPLET_CATEGORIES = [
+  { cat:"賀訂婚", phrases:["白首成約","文定吉祥","緣訂三生"] },
+  { cat:"賀結婚", phrases:["百年好合","珠聯璧合","鸞鳳和鳴"] },
+  { cat:"賀嫁女", phrases:["之子于歸","于歸誌喜","鳳翥鸞翔"] },
+  { cat:"賀生子", phrases:["熊夢徵祥","弄璋誌喜","麟趾呈祥"] },
+  { cat:"賀生女", phrases:["明珠入掌","弄瓦誌喜","彩堂添喜"] },
+  { cat:"賀遷居", phrases:["鶯遷喬木","喬遷誌慶","新居誌喜"] },
+  { cat:"賀開幕", phrases:["開幕誌慶","宏圖大展","盛會隆開"] },
+  { cat:"賀升遷", phrases:["步步高陞","青雲直上","榮膺新職"] },
+  { cat:"賀畢業", phrases:["鵬程萬里","前程似錦","展翅高飛"] },
+  { cat:"輓師長", phrases:["教澤長昭","德業永懷","懿德長昭"] },
+];
+
+/* =========================================================
+   ✅ 句子填空（B）：
+   - 第 1 題改成「寫給校長/主管的致謝信」→ 不再讓令尊產生歧義
+   ========================================================= */
+const SENTENCE_BANK = [
+  {
+    text:"（寫給校長/主管的致謝信）<br>敬啟者：日前承蒙<span class='blank'>＿＿＿</span>教誨，受益良多，特此致謝。",
+    choices:["家父","令尊","鈞座","舍弟"],
+    answer:2,
+    explain:"此題已限定「寫給校長/主管」，用敬稱「鈞座」最合宜；「令尊」是對方父親，語境不符。"
+  },
+  {
+    text:"謹代<span class='blank'>＿＿＿</span>致上誠摯問候，並祝近安。",
+    choices:["家母","令堂","亡母","尊堂"],
+    answer:0,
+    explain:"「謹代…致意」多代自己家人（家母/家父）。"
+  },
+  {
+    text:"你要寄信回家給父母，信封啟封詞宜寫<span class='blank'>＿＿＿</span>。",
+    choices:["福啟","緘","道啟","鈞啟"],
+    answer:0,
+    explain:"寄給父母常用「福啟」。"
+  },
+  {
+    text:"你要寫信給上級主管，信封啟封詞宜寫<span class='blank'>＿＿＿</span>。",
+    choices:["福啟","台啟","鈞啟","道啟"],
+    answer:2,
+    explain:"寄給長官常用「鈞啟」。"
+  },
+  {
+    text:"弔唁信封常見寫法：在收件人後可加註<span class='blank'>＿＿＿</span>。",
+    choices:["福啟","靈前","敬啟","緘封"],
+    answer:1,
+    explain:"弔唁可用「靈前」等標記。"
+  },
+];
+
+const QUIZ_BANK = [
+  {
+    tag:"題辭",
+    scenarioQ:"朋友搬新家，你要寫題辭，較合宜的是？",
+    choices:["鶯遷喬木","百年好合","弄璋誌喜","步步高陞"],
+    answer:0,
+    explain:"遷居常用「鶯遷喬木／喬遷誌慶」。"
+  },
+  {
+    tag:"題辭",
+    scenarioQ:"朋友家要嫁女兒，紅包袋題辭較合宜的是？",
+    choices:["之子于歸","鵬程萬里","教澤長昭","熊夢徵祥"],
+    answer:0,
+    explain:"嫁女常用「之子于歸／于歸誌喜」。"
+  },
+  {
+    tag:"書信",
+    scenarioQ:"你要稱呼對方夫妻（夫婦）合稱，較合宜的是？",
+    choices:["賢昆仲","賢伉儷","賢喬梓","賢友"],
+    answer:1,
+    explain:"夫婦合稱常用「賢伉儷」。"
+  },
+  {
+    tag:"書信",
+    scenarioQ:"你要寫信給宗教界人士，提稱語較合宜的是？",
+    choices:["鈞鑒","道鑒","台鑒","惠鑒"],
+    answer:1,
+    explain:"宗教界常用「道鑒」。"
+  },
+  {
+    tag:"書信",
+    scenarioQ:"你要寫給上級主管，問候語較合宜的是？",
+    choices:["順頌 時祺","敬請 鈞安","敬請 大安","此致 敬禮"],
+    answer:1,
+    explain:"上級/長官多用「敬請 鈞安」。"
+  },
+];
+
+/* =========================================================
+   回合題庫生成：抽類別 → 右側不重複 → 一對一
+   ========================================================= */
+function buildLetterPairs(roundN){
+  const cats = sample(LETTER_CATEGORIES, Math.min(roundN, LETTER_CATEGORIES.length));
+  return cats.map(c => ({ left: sample(c.prompts, 1)[0], right: c.cat }));
+}
+function buildCoupletPairs(roundN){
+  const cats = sample(COUPLET_CATEGORIES, Math.min(roundN, COUPLET_CATEGORIES.length));
+  return cats.map(c => ({ left: sample(c.phrases, 1)[0], right: c.cat }));
+}
+
+/* =========================================================
+   成績紀錄
+   ========================================================= */
+const grade = {
+  startedAt: Date.now(),
+  attempts: 0,
+  correct: 0,
+  completedModes: new Set(),
+  wrongs: [],
+};
+
+function markAttempt(isCorrect){
+  grade.attempts++;
+  if(isCorrect) grade.correct++;
+}
+function addWrong(mode, q, correct, picked){
+  grade.wrongs.push({mode, q, correct, picked});
+}
+function accuracy(){
+  if(grade.attempts<=0) return 0;
+  return (grade.correct/grade.attempts)*100;
+}
+function displayDurationSec(){
+  const sec = (Date.now() - grade.startedAt)/1000;
+  return Math.max(sec, MIN_TOTAL_SECONDS);
+}
+function scoreDotUpdate(){
+  const acc = accuracy();
+  const dot = $("#scoreDot");
+  if(grade.attempts===0){ dot.className="dot"; return; }
+  dot.className = "dot " + (acc>=PASS_ACCURACY ? "good" : "warn");
+}
+
+/* =========================================================
+   🎉 Confetti（達標後噴一次）
+   ========================================================= */
+let confettiLock = false;
+function launchConfetti(){
+  if(confettiLock) return;
+  confettiLock = true;
+
+  const layer = $("#confettiLayer");
+  layer.innerHTML = "";
+  layer.classList.add("show");
+
+  const colors = ["#7c3aed","#06b6d4","#ec4899","#f59e0b","#22c55e","#ffffff"];
+  const count = Math.min(120, Math.floor(window.innerWidth/6)); // 手機也不會太爆
+
+  for(let i=0;i<count;i++){
+    const c = document.createElement("div");
+    c.className = "confetti";
+    const x = Math.random() * window.innerWidth;
+    const drift = (Math.random()*2-1) * 220;
+    const dur = 1.9 + Math.random()*1.6;
+    const rot = 360 + Math.random()*720;
+    const w = 7 + Math.random()*8;
+    const h = 10 + Math.random()*10;
+
+    c.style.left = x + "px";
+    c.style.width = w + "px";
+    c.style.height = h + "px";
+    c.style.background = colors[Math.floor(Math.random()*colors.length)];
+    c.style.animationDuration = dur + "s";
+    c.style.setProperty("--x", "0px");
+    c.style.setProperty("--drift", drift + "px");
+    c.style.setProperty("--rot", rot + "deg");
+    c.style.animationDelay = (Math.random()*0.15) + "s";
+
+    layer.appendChild(c);
+  }
+
+  setTimeout(()=>{
+    layer.classList.remove("show");
+    layer.innerHTML = "";
+    confettiLock = false;
+  }, 2600);
+}
+
+/* =========================================================
+   模式
+   ========================================================= */
+const MODES = {
+  "match-letter": { title:"配對｜書信（對象→用語）", sub:"點左一張 → 再點右一張配對。右側答案不重複，一對一。", kind:"match", source:"letter",
+                    leftLabel:"左｜情境 / 對象", rightLabel:"右｜正確用語", graded:true },
+  "sentence":     { title:"句子填空（B）｜書信語境判斷", sub:"一題一屏：看句子，再選最合宜用語。", kind:"sentence", graded:true },
+  "match-couplet":{ title:"配對｜題辭（題辭→類別）", sub:"每回合抽不同類別：右側不重複，一對一。", kind:"match", source:"couplet",
+                    leftLabel:"左｜題辭", rightLabel:"右｜類別", graded:true },
+  "flash":        { title:"翻翻卡｜快刷複習", sub:"點卡片或按翻面。先想 3 秒再翻面。", kind:"flash", graded:false },
+  "quiz":         { title:"情境 Quiz｜選題辭/稱謂", sub:"5 題算 1 回合；先選，再看解析。", kind:"quiz", graded:true },
+};
+
+const state = {
+  mode:"match-letter",
+  roundPairs:[],
+  left:[],
+  right:[],
+  pickedLeft:null,
+  pickedRight:null,
+  locked:new Set(),
+  score:0,
+  total:0,
+
+  quizIdxs:[],
+  quizPos:0,
+  quizAnswered:false,
+  quizCorrect:0,
+
+  sentRound:[],
+  sentPos:0,
+  sentAnswered:false,
+  sentCorrect:0,
+
+  flashDeck:[],
+  flashPos:0,
+  flashShow:false,
+};
+
+function setMode(mode){
+  state.mode = mode;
+  $$("#modeBar .pill").forEach(b=>b.classList.toggle("active", b.dataset.mode===mode));
+  $("#modeTitle").textContent = MODES[mode].title;
+  $("#modeSub").textContent = MODES[mode].sub;
+  build();
+}
+
+function build(){
+  const stage = $("#stage");
+  stage.innerHTML = "";
+  const m = MODES[state.mode];
+
+  if(m.kind==="match"){
+    const pairs = (m.source==="couplet")
+      ? buildCoupletPairs(ROUND_SIZE_MATCH)
+      : buildLetterPairs(ROUND_SIZE_MATCH);
+    return buildMatch(stage, pairs, m.leftLabel, m.rightLabel, m.graded);
+  }
+  if(m.kind==="sentence") return buildSentence(stage);
+  if(m.kind==="quiz") return buildQuiz(stage);
+  if(m.kind==="flash") return buildFlash(stage);
+}
+
+/* =========================================================
+   MATCH
+   ========================================================= */
+function buildMatch(stage, pairs, leftLabel, rightLabel, graded){
+  state.roundPairs = pairs;
+  state.left  = state.roundPairs.map((p, i)=>({ key:"L"+i, text:p.left }));
+  state.right = shuffle(state.roundPairs.map((p, i)=>({ key:"R"+i, text:p.right })));
+
+  state.pickedLeft = null;
+  state.pickedRight = null;
+  state.locked = new Set();
+  state.score = 0;
+  state.total = state.roundPairs.length;
+
+  const wrap = document.createElement("div");
+  wrap.className = "split";
+
+  const colL = document.createElement("div");
+  colL.className = "col";
+  colL.innerHTML = `<h3>${escapeHtml(leftLabel || "左")}</h3>`;
+
+  const colR = document.createElement("div");
+  colR.className = "col";
+  colR.innerHTML = `<h3>${escapeHtml(rightLabel || "右")}</h3>`;
+
+  state.left.forEach(it=>colL.appendChild(renderItem(it, "left", graded)));
+  state.right.forEach(it=>colR.appendChild(renderItem(it, "right", graded)));
+
+  wrap.appendChild(colL);
+  wrap.appendChild(colR);
+
+  const meta = document.createElement("div");
+  meta.className = "meta";
+  meta.id = "matchMeta";
+  meta.textContent = `本回合：${state.total} 組｜已完成：0/${state.total}`;
+
+  stage.appendChild(wrap);
+  stage.appendChild(meta);
+
+  function renderItem(item, side, graded){
+    const btn = document.createElement("button");
+    btn.className = "item";
+    btn.dataset.side = side;
+    btn.dataset.key = item.key;
+    btn.innerHTML = `<span>${escapeHtml(item.text)}</span><small>點選</small>`;
+
+    btn.addEventListener("click", ()=>{
+      if(state.locked.has(item.key)) return;
+      btn.classList.remove("wrong");
+
+      if(side === "left"){
+        $$(".item[data-side='left']").forEach(x=>x.classList.remove("selected"));
+        state.pickedLeft = item.key;
+        btn.classList.add("selected");
+      }else{
+        $$(".item[data-side='right']").forEach(x=>x.classList.remove("selected"));
+        state.pickedRight = item.key;
+        btn.classList.add("selected");
+      }
+      if(state.pickedLeft && state.pickedRight) checkMatch(graded);
+    });
+
+    return btn;
+  }
+
+  function checkMatch(graded){
+    const Lidx = Number(state.pickedLeft.slice(1));
+    const correctRightKey = "R"+Lidx;
+
+    const leftBtn = $(`.item[data-key="${state.pickedLeft}"]`);
+    const rightBtn = $(`.item[data-key="${state.pickedRight}"]`);
+
+    const qText = state.roundPairs[Lidx].left;
+    const correctText = state.roundPairs[Lidx].right;
+    const pickedText = state.right[Number(state.pickedRight.slice(1))]?.text || rightBtn?.innerText || "";
+
+    if(state.pickedRight === correctRightKey){
+      state.locked.add(state.pickedLeft);
+      state.locked.add(state.pickedRight);
+      leftBtn.classList.remove("selected");
+      rightBtn.classList.remove("selected");
+      leftBtn.classList.add("correct");
+      rightBtn.classList.add("correct");
+      leftBtn.querySelector("small").textContent = "✅";
+      rightBtn.querySelector("small").textContent = "✅";
+      state.score++;
+
+      if(graded){
+        markAttempt(true);
+        scoreDotUpdate();
+      }
+      toast("配對正確 ✅");
+    }else{
+      rightBtn.classList.remove("selected");
+      rightBtn.classList.add("wrong");
+
+      if(graded){
+        markAttempt(false);
+        addWrong(MODES[state.mode].title, qText, correctText, pickedText);
+        scoreDotUpdate();
+      }
+      toast("再想一下～ (´・ω・`)");
+    }
+
+    state.pickedLeft = null;
+    state.pickedRight = null;
+
+    const meta = $("#matchMeta");
+    if(meta) meta.textContent = `本回合：${state.total} 組｜已完成：${state.score}/${state.total}`;
+
+    if(state.score === state.total){
+      if(graded) grade.completedModes.add(MODES[state.mode].title);
+      toast("本回合完成 ✨");
+    }
+  }
+}
+
+/* =========================================================
+   SENTENCE
+   ========================================================= */
+function buildSentence(stage){
+  state.sentRound = sample(SENTENCE_BANK, ROUND_SIZE_SENT);
+  state.sentPos = 0;
+  state.sentAnswered = false;
+  state.sentCorrect = 0;
+
+  stage.innerHTML = `
+    <div class="row">
+      <button class="btn" id="sentPrev">上一題</button>
+      <button class="btn primary" id="sentNext">下一題</button>
+    </div>
+    <div style="margin-top:12px" id="sentArea"></div>
+  `;
+
+  const render = ()=>{
+    state.sentAnswered = false;
+    const q = state.sentRound[state.sentPos];
+
+    $("#sentArea").innerHTML = `
+      <div class="meta">句子填空｜第 ${state.sentPos+1}/${state.sentRound.length} 題｜目前：${state.sentCorrect}/${state.sentPos}</div>
+      <div class="sentenceBox">
+        <p class="sentenceText">${q.text}</p>
+      </div>
+      <div class="choices" id="sentChoices"></div>
+      <div class="meta" id="sentMeta">先選，再看解析。</div>
+    `;
+
+    const ch = $("#sentChoices");
+    q.choices.forEach((c, idx)=>{
+      const b = document.createElement("button");
+      b.className = "choice";
+      b.textContent = c;
+      b.onclick = ()=>{
+        if(state.sentAnswered) return;
+        state.sentAnswered = true;
+
+        [...ch.children].forEach((node, j)=>{
+          node.classList.remove("correct","wrong");
+          if(j === q.answer) node.classList.add("correct");
+        });
+
+        const correct = (idx === q.answer);
+        if(!correct) b.classList.add("wrong");
+
+        $("#sentMeta").textContent = "解析：" + (q.explain || "（略）");
+
+        markAttempt(correct);
+        if(!correct){
+          addWrong(MODES[state.mode].title, q.text.replaceAll(/<[^>]*>/g,""), q.choices[q.answer], c);
+        }
+        scoreDotUpdate();
+
+        if(correct){ state.sentCorrect++; toast("正確 ✅"); }
+        else toast("再看解析～ えっと");
+      };
+      ch.appendChild(b);
+    });
+  };
+
+  $("#sentPrev").onclick = ()=>{
+    state.sentPos = (state.sentPos - 1 + state.sentRound.length) % state.sentRound.length;
+    render();
+  };
+  $("#sentNext").onclick = ()=>{
+    if(!state.sentAnswered){ toast("先作答再換題比較有效喔"); return; }
+    if(state.sentPos === state.sentRound.length-1){
+      grade.completedModes.add(MODES[state.mode].title);
+    }
+    state.sentPos = (state.sentPos + 1) % state.sentRound.length;
+    render();
+  };
+
+  render();
+}
+
+/* =========================================================
+   QUIZ
+   ========================================================= */
+function buildQuiz(stage){
+  const idxs = shuffle(QUIZ_BANK.map((_,i)=>i)).slice(0, ROUND_SIZE_QUIZ);
+  state.quizIdxs = idxs;
+  state.quizPos = 0;
+  state.quizAnswered = false;
+  state.quizCorrect = 0;
+
+  stage.innerHTML = `
+    <div class="row">
+      <button class="btn" id="quizPrev">上一題</button>
+      <button class="btn primary" id="quizNext">下一題</button>
+    </div>
+    <div style="margin-top:12px" id="quizArea"></div>
+  `;
+
+  const render = ()=>{
+    state.quizAnswered = false;
+    const q = QUIZ_BANK[state.quizIdxs[state.quizPos]];
+
+    $("#quizArea").innerHTML = `
+      <div class="meta">${q.tag}｜第 ${state.quizPos+1}/${state.quizIdxs.length} 題｜目前：${state.quizCorrect}/${state.quizPos}</div>
+      <div class="sentenceBox">
+        <p class="sentenceText">${escapeHtml(q.scenarioQ)}</p>
+      </div>
+      <div class="choices" id="quizChoices"></div>
+      <div class="meta" id="quizMeta">請選最合宜的題辭/用語。</div>
+    `;
+
+    const ch = $("#quizChoices");
+    q.choices.forEach((c, idx)=>{
+      const b = document.createElement("button");
+      b.className = "choice";
+      b.textContent = c;
+      b.onclick = ()=>{
+        if(state.quizAnswered) return;
+        state.quizAnswered = true;
+
+        [...ch.children].forEach((node, j)=>{
+          node.classList.remove("correct","wrong");
+          if(j === q.answer) node.classList.add("correct");
+        });
+
+        const correct = (idx === q.answer);
+        if(!correct) b.classList.add("wrong");
+
+        $("#quizMeta").textContent = "解析：" + (q.explain || "（略）");
+
+        markAttempt(correct);
+        if(!correct){
+          addWrong(MODES[state.mode].title, q.scenarioQ, q.choices[q.answer], c);
+        }
+        scoreDotUpdate();
+
+        if(correct){ state.quizCorrect++; toast("答對 ✅"); }
+        else toast("再想一下～ (ง •̀_•́)ง");
+      };
+      ch.appendChild(b);
+    });
+  };
+
+  $("#quizPrev").onclick = ()=>{
+    state.quizPos = (state.quizPos - 1 + state.quizIdxs.length) % state.quizIdxs.length;
+    render();
+  };
+  $("#quizNext").onclick = ()=>{
+    if(!state.quizAnswered){ toast("先作答再換題比較有效喔"); return; }
+    if(state.quizPos === state.quizIdxs.length-1){
+      grade.completedModes.add(MODES[state.mode].title);
+    }
+    state.quizPos = (state.quizPos + 1) % state.quizIdxs.length;
+    render();
+  };
+
+  render();
+}
+
+/* =========================================================
+   FLASH（不計分）
+   ========================================================= */
+function buildFlash(stage){
+  const deck = [];
+  LETTER_CATEGORIES.forEach(c=>c.prompts.forEach(p=>deck.push({ tag:"書信", q:p, a:c.cat })));
+  COUPLET_CATEGORIES.forEach(c=>c.phrases.forEach(ph=>deck.push({ tag:"題辭", q:`題辭：${ph}`, a:`類別：${c.cat}` })));
+
+  state.flashDeck = shuffle(deck).slice(0, 14);
+  state.flashPos = 0;
+  state.flashShow = false;
+
+  stage.innerHTML = `
+    <div class="flashWrap">
+      <div class="flashCard" id="flashCard" role="button" aria-label="翻翻卡"></div>
+      <div class="row">
+        <button class="btn primary" id="flipBtn">翻面</button>
+        <button class="btn" id="prevBtn">上一張</button>
+        <button class="btn" id="nextBtn">下一張</button>
+      </div>
+      <div class="meta" id="flashMeta"></div>
+    </div>
+  `;
+
+  const render = ()=>{
+    const card = $("#flashCard");
+    const meta = $("#flashMeta");
+    const cur = state.flashDeck[state.flashPos];
+
+    card.innerHTML = `
+      <div class="flashTop">
+        <div class="flashTag">${escapeHtml(cur.tag)}｜第 ${state.flashPos+1}/${state.flashDeck.length} 張</div>
+        <div class="flashHint">${state.flashShow ? "答案" : "先想 3 秒再翻 (點卡片/按翻面)"}</div>
+      </div>
+      <div class="flashQ">${escapeHtml(cur.q)}</div>
+      <div class="flashA">${escapeHtml(cur.a)}</div>
+    `;
+    card.classList.toggle("showA", state.flashShow);
+    meta.textContent = "翻翻卡不計入成績卡（暖身/複習用）。";
+  };
+
+  const flip = ()=>{
+    state.flashShow = !state.flashShow;
+    render();
+  };
+
+  $("#flipBtn").onclick = flip;
+  $("#flashCard").onclick = flip;
+  $("#prevBtn").onclick = ()=>{
+    state.flashPos = (state.flashPos - 1 + state.flashDeck.length) % state.flashDeck.length;
+    state.flashShow = false;
+    render();
+  };
+  $("#nextBtn").onclick = ()=>{
+    state.flashPos = (state.flashPos + 1) % state.flashDeck.length;
+    state.flashShow = false;
+    render();
+  };
+
+  render();
+}
+
+/* =========================================================
+   ✅ 成績卡：學生欄位（localStorage）
+   ========================================================= */
+const LS_KEY = "appliedWriting_studentInfo_v2";
+function loadStudentInfo(){
+  try{
+    const raw = localStorage.getItem(LS_KEY);
+    if(!raw) return;
+    const obj = JSON.parse(raw);
+    if(obj.cls) $("#stuClass").value = obj.cls;
+    if(obj.no)  $("#stuNo").value = obj.no;
+    if(obj.name)$("#stuName").value = obj.name;
+  }catch(e){}
+}
+function saveStudentInfo(){
+  const obj = {
+    cls: ($("#stuClass").value || "").trim(),
+    no:  ($("#stuNo").value || "").trim(),
+    name:($("#stuName").value || "").trim(),
+  };
+  localStorage.setItem(LS_KEY, JSON.stringify(obj));
+}
+["stuClass","stuNo","stuName"].forEach(id=>{
+  $("#"+id).addEventListener("input", saveStudentInfo);
+});
+
+/* =========================================================
+   成績卡
+   ========================================================= */
+function openScore(){
+  scoreDotUpdate();
+
+  const acc = accuracy();
+  const dur = displayDurationSec();
+  const pass = acc >= PASS_ACCURACY && grade.attempts>0;
+
+  $("#scoreTime").textContent = `時間：${nowStamp()}`;
+  $("#scoreAcc").textContent = `${acc.toFixed(2)}%`;
+  $("#scoreDur").textContent = fmtTime(dur);
+  $("#scoreCount").textContent = `${grade.attempts} / ${grade.correct}`;
+  $("#scoreModes").textContent = grade.completedModes.size ? [...grade.completedModes].join("、") : "（尚未完成計分模式）";
+
+  $("#scoreBadge").textContent = pass ? "達標 🎉" : "未達標";
+  $("#scoreBadge").style.borderColor = pass ? "rgba(22,163,74,.25)" : "rgba(245,158,11,.25)";
+  $("#scoreBadge").style.background = pass ? "rgba(22,163,74,.10)" : "rgba(245,158,11,.10)";
+  $("#scoreBadge").style.color = pass ? "rgba(22,163,74,.95)" : "rgba(161,98,7,.95)";
+
+  const box = $("#wrongItems");
+  box.innerHTML = "";
+  if(grade.wrongs.length===0){
+    box.innerHTML = `<div class="wrongItem">（本次沒有記錄到錯題）</div>`;
+  }else{
+    grade.wrongs.slice(-60).forEach(w=>{
+      const div = document.createElement("div");
+      div.className = "wrongItem";
+      div.innerHTML = `
+        <div style="font-weight:950; margin-bottom:6px;">${escapeHtml(w.mode)}</div>
+        <div style="color:#111827; margin-bottom:6px;">Q：${escapeHtml(w.q)}</div>
+        <div style="color: var(--good); font-weight:900;">正解：${escapeHtml(w.correct)}</div>
+        <div style="color: var(--bad); font-weight:900;">你的選擇：${escapeHtml(w.picked)}</div>
+      `;
+      box.appendChild(div);
+    });
+  }
+
+  $("#overlay").classList.add("show");
+
+  /* ✅ 達標噴彩帶（打開成績卡時觸發一次） */
+  if(pass){
+    launchConfetti();
+  }
+}
+
+function closeScore(){
+  $("#overlay").classList.remove("show");
+}
+
+async function downloadScorePNG(){
+  saveStudentInfo();
+  const card = $("#scoreCard");
+  toast("正在產生 PNG…");
+  await new Promise(r=>setTimeout(r, 60));
+  const canvas = await html2canvas(card, {scale: 2, backgroundColor: null});
+  const a = document.createElement("a");
+  a.download = `成績卡_應用文_${Date.now()}.png`;
+  a.href = canvas.toDataURL("image/png");
+  a.click();
+  toast("已下載成績卡 ✅");
+}
+
+function clearGrade(){
+  grade.startedAt = Date.now();
+  grade.attempts = 0;
+  grade.correct = 0;
+  grade.completedModes = new Set();
+  grade.wrongs = [];
+  scoreDotUpdate();
+  toast("已清空本次紀錄");
+}
+
+/* =========================================================
+   UI Hook
+   ========================================================= */
+$("#resetBtn").addEventListener("click", ()=>build());
+$("#shuffleBtn").addEventListener("click", ()=>build());
+
+$$("#modeBar .pill").forEach(btn=>{
+  if(btn.dataset.mode) btn.addEventListener("click", ()=>setMode(btn.dataset.mode));
+});
+
+$("#scoreBtn").addEventListener("click", openScore);
+$("#closeBtn").addEventListener("click", closeScore);
+$("#clearBtn").addEventListener("click", ()=>{
+  clearGrade();
+  closeScore();
+});
+$("#downloadBtn").addEventListener("click", downloadScorePNG);
+
+$("#overlay").addEventListener("click", (e)=>{
+  if(e.target.id==="overlay") closeScore();
+});
+
+/* Init */
+scoreDotUpdate();
+loadStudentInfo();
+setMode("match-letter");
+</script>
+</body>
+</html>
