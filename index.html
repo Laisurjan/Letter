@@ -84,7 +84,12 @@
     }
 
     button{font:inherit}
-    .wrap{max-width:980px;margin:0 auto;padding:18px 14px 28px}
+    .wrap{
+      max-width:980px;
+      margin:0 auto;
+      padding:18px 14px 28px;
+      padding-bottom: 96px; /* ✅ 底部進度條預留空間：不遮住內容 */
+    }
 
     header{
       display:flex;gap:12px;align-items:flex-start;justify-content:space-between;
@@ -108,6 +113,28 @@
       box-shadow: 0 12px 30px rgba(2,6,23,.10);
     }
     .title p{margin:0;color:var(--muted);font-size:13px;line-height:1.4}
+
+    /* ✅ 追加：手機橫持提示 */
+    .hintTop{
+      margin-top:2px;
+      font-size:12px;
+      color: rgba(60,40,140,.95);
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:6px 10px;
+      border-radius:999px;
+      border:1px solid rgba(124,58,237,.20);
+      background: rgba(255,255,255,.70);
+      backdrop-filter: blur(10px);
+      box-shadow: 0 12px 30px rgba(2,6,23,.10);
+      width: fit-content;
+    }
+    .hintTop .spark{
+      width:8px;height:8px;border-radius:50%;
+      background: rgba(124,58,237,.65);
+      box-shadow: 0 0 0 4px rgba(124,58,237,.10);
+    }
 
     .toolbar{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
     .pill{
@@ -543,6 +570,56 @@
         opacity: .95;
       }
     }
+
+    /* ✅ 底部進度條 Dock（不妨礙閱讀） */
+    .progressDock{
+      position:fixed;
+      left:50%;
+      bottom:12px;
+      transform:translateX(-50%);
+      width:min(980px, calc(100vw - 18px));
+      z-index:9500;
+      pointer-events:none; /* 不擋操作 */
+    }
+    .progressCard{
+      pointer-events:none;
+      border:1px solid rgba(255,255,255,.35);
+      border-radius:18px;
+      background: rgba(255,255,255,.72);
+      backdrop-filter: blur(12px);
+      box-shadow: 0 18px 52px rgba(2,6,23,.14);
+      overflow:hidden;
+    }
+    .progressTop{
+      display:flex;
+      gap:10px;
+      align-items:center;
+      justify-content:space-between;
+      padding:10px 12px 8px;
+      font-size:12px;
+      color: var(--muted);
+    }
+    .progressTop b{ color: rgba(60,40,140,.95); font-weight:950; }
+    .progressBar{
+      height:10px;
+      background: rgba(2,6,23,.06);
+      border-top:1px solid rgba(15,23,42,.08);
+      position:relative;
+      overflow:hidden;
+    }
+    .progressFill{
+      height:100%;
+      width:0%;
+      background: linear-gradient(90deg,
+        rgba(124,58,237,.55),
+        rgba(6,182,212,.50),
+        rgba(236,72,153,.45),
+        rgba(245,158,11,.40),
+        rgba(34,197,94,.38)
+      );
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,.20);
+      transition: width .20s ease;
+    }
   </style>
 </head>
 
@@ -551,6 +628,10 @@
   <header>
     <div class="title">
       <h1>應用文｜稱謂＆題辭 <span class="badge">練習可證明</span></h1>
+
+      <!-- ✅ 追加：頁頭手機橫持提示 -->
+      <div class="hintTop"><span class="spark"></span>【如以手機進行建議橫持操作，取得最佳效果】</div>
+
       <p>每回合少量題目（預設 6 組），手機好操作。計分模式完成後可產生成績卡（含姓名欄、錯題回放、用時下限＋達標彩帶）。</p>
     </div>
     <div class="toolbar" id="modeBar">
@@ -579,6 +660,19 @@
     </div>
     <div class="cardBody" id="stage"></div>
   </section>
+</div>
+
+<!-- ✅ 底部進度條（顯示答題數＆得分狀況；不擋閱讀/操作） -->
+<div class="progressDock" id="progressDock" aria-hidden="true">
+  <div class="progressCard">
+    <div class="progressTop">
+      <div><b id="pMode">—</b> <span id="pRound">—</span></div>
+      <div><span id="pScore">作答 0｜正確 0｜0.00%</span></div>
+    </div>
+    <div class="progressBar">
+      <div class="progressFill" id="pFill"></div>
+    </div>
+  </div>
 </div>
 
 <div class="toast" id="toast"></div>
@@ -758,17 +852,17 @@ const LETTER_CATEGORIES = [
   { cat:"謹緘", prompts:["緘封詞：寫給長輩寄出前封緘（較敬）","緘封詞：對尊長較常用"] },
 
   /* 明信片（你點名要考） */
-  { cat:"用『寄』不用『緘』", prompts:[
+  { cat:"明信片：用『寄』不用『緘』", prompts:[
     "明信片沒有封口：寄出時常用哪個字，不用『緘』？",
     "明信片（無封緘）：寄件處常寫哪個字？"
   ] },
 
   /* 信封寄件/收件易錯（你點名要考） */
-  { cat:"左上寄件／中右收件", prompts:[
+  { cat:"橫式：左上寄件／中右收件", prompts:[
     "橫式信封最容易寫錯：寄件與收件位置應怎麼分？",
     "橫式信封：哪一區是寄件人資訊？（整體規則）"
   ] },
-  { cat:"右欄寄件／中欄收件", prompts:[
+  { cat:"直式：右欄寄件／中欄收件", prompts:[
     "直式信封常見規則：右欄與中欄分別放什麼？",
     "直式信封：哪一欄是收件人（中欄）？（整體規則）"
   ] },
@@ -1083,6 +1177,7 @@ const grade = {
 function markAttempt(isCorrect){
   grade.attempts++;
   if(isCorrect) grade.correct++;
+  updateProgressDock(); // ✅ 追加：答題後同步更新底部進度
 }
 function addWrong(mode, q, correct, picked){
   grade.wrongs.push({mode, q, correct, picked});
@@ -1100,6 +1195,41 @@ function scoreDotUpdate(){
   const dot = $("#scoreDot");
   if(grade.attempts===0){ dot.className="dot"; return; }
   dot.className = "dot " + (acc>=PASS_ACCURACY ? "good" : "warn");
+}
+
+/* =========================================================
+   ✅ 底部進度條：顯示「答題數＋得分＋本回合進度」
+   ========================================================= */
+function updateProgressDock(){
+  const m = MODES[state.mode];
+  $("#pMode").textContent = m ? m.title : "—";
+
+  const acc = accuracy();
+  $("#pScore").textContent = `作答 ${grade.attempts}｜正確 ${grade.correct}｜${acc.toFixed(2)}%`;
+
+  let done = 0, total = 0, label = "";
+
+  if(m.kind==="match"){
+    done = state.score || 0;
+    total = state.total || 0;
+    label = total ? `本回合：${done}/${total}` : "本回合：—";
+  }else if(m.kind==="sentence"){
+    total = state.sentRound?.length || 0;
+    done = state.sentAnsweredSet ? state.sentAnsweredSet.size : 0;
+    label = total ? `本回合：${done}/${total}` : "本回合：—";
+  }else if(m.kind==="quiz"){
+    total = state.quizIdxs?.length || 0;
+    done = state.quizAnsweredSet ? state.quizAnsweredSet.size : 0;
+    label = total ? `本回合：${done}/${total}` : "本回合：—";
+  }else{
+    label = "暖身：不計分";
+    done = 0; total = 0;
+  }
+
+  $("#pRound").textContent = label;
+
+  const pct = (total>0) ? (done/total)*100 : 0;
+  $("#pFill").style.width = `${Math.max(0, Math.min(100, pct))}%`;
 }
 
 /* =========================================================
@@ -1175,11 +1305,13 @@ const state = {
   quizPos:0,
   quizAnswered:false,
   quizCorrect:0,
+  quizAnsweredSet: new Set(), // ✅ 追加：本回合已作答題數
 
   sentRound:[],
   sentPos:0,
   sentAnswered:false,
   sentCorrect:0,
+  sentAnsweredSet: new Set(), // ✅ 追加：本回合已作答題數
 
   flashDeck:[],
   flashPos:0,
@@ -1192,6 +1324,7 @@ function setMode(mode){
   $("#modeTitle").textContent = MODES[mode].title;
   $("#modeSub").textContent = MODES[mode].sub;
   build();
+  updateProgressDock(); // ✅ 追加
 }
 
 function build(){
@@ -1248,6 +1381,8 @@ function buildMatch(stage, pairs, leftLabel, rightLabel, graded){
 
   stage.appendChild(wrap);
   stage.appendChild(meta);
+
+  updateProgressDock(); // ✅ 追加：新回合進度歸零
 
   function renderItem(item, side, graded){
     const btn = document.createElement("button");
@@ -1320,6 +1455,8 @@ function buildMatch(stage, pairs, leftLabel, rightLabel, graded){
     const meta = $("#matchMeta");
     if(meta) meta.textContent = `本回合：${state.total} 組｜已完成：${state.score}/${state.total}`;
 
+    updateProgressDock(); // ✅ 追加：每次配對後更新進度條
+
     if(state.score === state.total){
       if(graded) grade.completedModes.add(MODES[state.mode].title);
       toast("本回合完成 ✨");
@@ -1335,6 +1472,7 @@ function buildSentence(stage){
   state.sentPos = 0;
   state.sentAnswered = false;
   state.sentCorrect = 0;
+  state.sentAnsweredSet = new Set(); // ✅ 追加
 
   stage.innerHTML = `
     <div class="row">
@@ -1366,6 +1504,8 @@ function buildSentence(stage){
         if(state.sentAnswered) return;
         state.sentAnswered = true;
 
+        state.sentAnsweredSet.add(state.sentPos); // ✅ 追加：記錄已作答題目
+
         [...ch.children].forEach((node, j)=>{
           node.classList.remove("correct","wrong");
           if(j === q.answer) node.classList.add("correct");
@@ -1384,9 +1524,13 @@ function buildSentence(stage){
 
         if(correct){ state.sentCorrect++; toast("正確 ✅"); }
         else toast("再看解析～ えっと");
+
+        updateProgressDock(); // ✅ 追加：作答後更新
       };
       ch.appendChild(b);
     });
+
+    updateProgressDock(); // ✅ 追加：切題也更新（顯示本回合作答數）
   };
 
   $("#sentPrev").onclick = ()=>{
@@ -1414,6 +1558,7 @@ function buildQuiz(stage){
   state.quizPos = 0;
   state.quizAnswered = false;
   state.quizCorrect = 0;
+  state.quizAnsweredSet = new Set(); // ✅ 追加
 
   stage.innerHTML = `
     <div class="row">
@@ -1445,6 +1590,8 @@ function buildQuiz(stage){
         if(state.quizAnswered) return;
         state.quizAnswered = true;
 
+        state.quizAnsweredSet.add(state.quizPos); // ✅ 追加：記錄已作答題目
+
         [...ch.children].forEach((node, j)=>{
           node.classList.remove("correct","wrong");
           if(j === q.answer) node.classList.add("correct");
@@ -1463,9 +1610,13 @@ function buildQuiz(stage){
 
         if(correct){ state.quizCorrect++; toast("答對 ✅"); }
         else toast("再想一下～ (ง •̀_•́)ง");
+
+        updateProgressDock(); // ✅ 追加：作答後更新
       };
       ch.appendChild(b);
     });
+
+    updateProgressDock(); // ✅ 追加
   };
 
   $("#quizPrev").onclick = ()=>{
@@ -1523,6 +1674,8 @@ function buildFlash(stage){
     `;
     card.classList.toggle("showA", state.flashShow);
     meta.textContent = "翻翻卡不計入成績卡（暖身/複習用）。";
+
+    updateProgressDock(); // ✅ 追加：切換卡也更新顯示（暖身不計分）
   };
 
   const flip = ()=>{
@@ -1642,14 +1795,15 @@ function clearGrade(){
   grade.completedModes = new Set();
   grade.wrongs = [];
   scoreDotUpdate();
+  updateProgressDock(); // ✅ 追加
   toast("已清空本次紀錄");
 }
 
 /* =========================================================
    UI Hook（不動）
    ========================================================= */
-$("#resetBtn").addEventListener("click", ()=>build());
-$("#shuffleBtn").addEventListener("click", ()=>build());
+$("#resetBtn").addEventListener("click", ()=>{ build(); updateProgressDock(); });
+$("#shuffleBtn").addEventListener("click", ()=>{ build(); updateProgressDock(); });
 
 $$("#modeBar .pill").forEach(btn=>{
   if(btn.dataset.mode) btn.addEventListener("click", ()=>setMode(btn.dataset.mode));
@@ -1671,6 +1825,7 @@ $("#overlay").addEventListener("click", (e)=>{
 scoreDotUpdate();
 loadStudentInfo();
 setMode("match-letter");
+updateProgressDock();
 </script>
 </body>
 </html>
